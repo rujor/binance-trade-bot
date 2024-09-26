@@ -1,21 +1,17 @@
-FROM python:3.8 as base
-
-FROM base as builder
-
-RUN mkdir /install
+FROM --platform=$BUILDPLATFORM python:3.8 as builder
 
 WORKDIR /install
 
-COPY requirements.txt /requirements.txt
+RUN apt-get update && apt-get install -y rustc
 
+COPY requirements.txt /requirements.txt
 RUN pip install --prefix=/install -r /requirements.txt
 
-FROM base
-
-COPY --from=builder /install /usr/local
-
-COPY . /app
+FROM python:3.8-slim
 
 WORKDIR /app
 
-CMD ["python", "crypto_trading.py"]
+COPY --from=builder /install /usr/local
+COPY . .
+
+CMD ["python", "-m", "binance_trade_bot"]
